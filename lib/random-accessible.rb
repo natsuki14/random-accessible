@@ -17,6 +17,7 @@ module RandomAccessable
     end
 
     def empty?
+      # Return false if size method is not implemented.
       size <= 0
     end
 
@@ -252,6 +253,9 @@ module RandomReadable
     #
   end
 
+  #def shuffle
+  #end
+
 end
 
 module RandomWritable
@@ -299,6 +303,23 @@ module RandomWritable
       replace_at(index, el)
     end
     return self
+  end
+
+  def shift(*args)
+    n = nil
+    if args.empty?
+      n = 1
+      return nil if empty?
+    else
+      n = args[0].to_int
+      return [] if empty?
+    end
+    res = self[0...n]
+    (size - n).times do |i|
+      replace_at(i, at(i + n))
+    end
+    trim n
+    return res
   end
 
 end
@@ -356,6 +377,10 @@ module RandomAccessible
   def select!(&block)
     # TODO: Optimize me.
     replace(select(&block))
+  end
+
+  def shuffle!
+    replace(shuffle)
   end
 
 end
