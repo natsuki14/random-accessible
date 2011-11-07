@@ -1,4 +1,4 @@
-module RandomAccessable
+module RandomAccessible
 
   module CommonTraits
 
@@ -33,7 +33,7 @@ module RandomAccessable
     def size
       if method(:length).owner == CommonTraits
         raise NotImplementedError,
-              "#{self.class.to_s} has neither length method nor size method."
+              "#{self.class.to_s} overrides neither length method nor size method."
       end
       return length
     end
@@ -41,7 +41,7 @@ module RandomAccessable
     def length
       if method(:size).owner == CommonTraits
         raise NotImplementedError,
-              "#{self.class.to_s} has neither length method nor size method."
+              "#{self.class.to_s} overrides neither length method nor size method."
       end
       return size
     end

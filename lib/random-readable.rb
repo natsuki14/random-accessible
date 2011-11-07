@@ -6,11 +6,6 @@ module RandomReadable
   include Enumerable
 
   def to_ary
-    unless has_size?
-      raise NotImplementedError,
-            "#{self.class.to_s} has neither length method nor size method."
-    end
-
     Enumerator.new do |y|
       size.times do |i|
         y << at(i)
@@ -42,8 +37,8 @@ module RandomReadable
   end
 
   def <=>(other)
-    size = [size, other.size].min
-    min.times do |i|
+    min_size = [size, other.size].min
+    min_size.times do |i|
       res = self[i] <=> other[i]
       return res if res != 0
     end
@@ -94,10 +89,12 @@ module RandomReadable
   def at(pos)
     pos = pos.to_int
 
-    if -size <= pos && pos < 0
-      return read_at(size + pos)
+    if 0 <= pos && !has_size?
+      return read_access(pos)
     elsif 0 <= pos && pos < size
-      return read_at(pos)
+      return read_access(pos)
+    elsif -size <= pos && pos < 0
+      return read_access(size + pos)
     else
       return nil
     end

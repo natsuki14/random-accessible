@@ -9,24 +9,56 @@ module RandomAccessible
   # TODO: Override RandomWritable.#[]= for optimization.
 
   def collect!(&block)
-    
+    replace(collect(&block))
   end
 
   alias :map! :collect!
 
   def compact!
-    #
+    replace(compact(&block))
   end
 
-  def delete
-    #
+  def delete(val, &block)
+    deleted = 0
+    if method(:delete_at).owner == RandomAccessible
+      size.times do |i|
+        if at(i) == val
+          deleted += 1
+        else
+          replace_at(i - deleted, at(i))
+        end
+      end
+      trim deleted
+    else
+      size.times do |i|
+        if at(i) == val
+          delete_at(i - deleted)
+          deleted += 1
+        end
+      end
+    end
+
+    if deleted > 0
+      return val
+    elsif block.nil?
+      return nil
+    else
+      return block.call
+    end
   end
 
-  #def delete_at(pos)
-  #end
+  def delete_at(pos)
+    ((pos + 1)...size).each do |i|
+      replace_at(i - 1, at(i))
+    end
+    trim 1
+  end
 
   def delete_if(&block)
-    #
+    if block.nil?
+      Enumerator.new |y|
+        
+    end
   end
 
   def keep_if(&block)
@@ -37,7 +69,7 @@ module RandomAccessible
     # Needs size.
     res = nil
     if n.nil?
-      res = self.at(size - 1)
+      res = at(size - 1)
       trim 1
     else
       res = self[(size - n)...size]
