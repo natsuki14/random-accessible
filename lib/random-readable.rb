@@ -62,14 +62,44 @@ module RandomReadable
 
     if args.size == 2
       start = args[0].to_int
-      Enumerator.new do |y|
-        args[1].to_int.times do |i|
-          y << at(i)
-        end
-      end.to_a
+      len   = args[1].to_int
+      if has_size?
+        return nil if start < -size || size < start
+        return nil if len < 0
+        return Enumerator.new do |y|
+          len.times do |i|
+            y << at(start + i) if start + i < size
+          end
+        end.to_a
+      else
+        return Enumerator.new do |y|
+          len.times do |i|
+            y << at(start + i)
+          end
+        end.to_a
+      end
     elsif args[0].is_a? Range
-      args[0].map do |i|
-        at(i)
+      range = args[0]
+      first = range.first
+      last = range.last
+
+      if has_size?
+        first += size if first < 0
+        last += size if last < 0
+        if first == size || (first == 0 && last < 0)
+          return []
+        elsif first < 0 || size < first || last < 0
+          return nil
+        end
+        return Enumerator.new do |y|
+          (first..last).each do |i|
+            y << at(i) if 0 <= i && i < size
+          end
+        end.to_a
+      else
+        range.map do |i|
+          at(i)
+        end
       end
     else
       at(args[0])
