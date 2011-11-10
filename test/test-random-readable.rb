@@ -303,5 +303,32 @@ class TestReadAccessable < Test::Unit::TestCase
     end
   end
 
+  test_at
+    FULL_IMPLS.each do |klass|
+      impl = klass.new((0...10).to_a)
+      assert_nil(impl.at(-11))
+      assert_equal(0, impl.at(-10))
+      assert_equal(9, impl.at(-1))
+      assert_equal(0, impl.at(0))
+      assert_equal(9, impl.at(9))
+      assert_nil(impl.at(10))
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new((0...10).to_a)
+      [-11, -10, -1].each do |pos|
+        assert_raise NotImplementedError do
+          impl.at(pos)
+        end
+      end
+
+      assert_equal(0, impl.at(0))
+      assert_equal(9, impl.at(9))
+
+      assert_raise ErrorForTest do
+        impl.at(10)
+      end
+    end
+  end
+
 end
 
