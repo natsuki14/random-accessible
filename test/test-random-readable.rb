@@ -281,5 +281,27 @@ class TestReadAccessable < Test::Unit::TestCase
     end
   end
 
+  def test_assoc
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([[1,15], [2,25], [3,35]])
+      assert_equal([1, 25], impl.assoc(1))
+      assert_equal([2, 25], impl.assoc(2))
+      assert_equal([3, 25], impl.assoc(3))
+      assert_nil(impl.assoc(100))
+      assert_nil(impl.assoc(15))
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([[1,15], [2,25], [3,35]])
+      assert_equal([1, 25], impl.assoc(1))
+      assert_equal([2, 25], impl.assoc(2))
+      assert_equal([3, 25], impl.assoc(3))
+      [100, 15].each do |n|
+        assert_raise do
+          impl.assoc(n)
+        end
+      end
+    end
+  end
+
 end
 
