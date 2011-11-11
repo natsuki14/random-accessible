@@ -15,25 +15,25 @@ module RandomReadable
 
   alias :to_a :to_ary
 
-  def deligate_to_array(name, *args)
+  def delegate_to_array(name, *args)
     to_ary.send(name, *args)
   end
-  private :deligate_to_array
+  private :delegate_to_array
 
   def &(other)
-    deligate_to_array(:&, other)
+    delegate_to_array(:&, other)
   end
 
   def *(arg)
-    deligate_to_array(:*, arg)
+    delegate_to_array(:*, arg)
   end
 
   def +(other)
-    deligate_to_array(:+, other)
+    delegate_to_array(:+, other)
   end
 
   def -(other)
-    deligate_to_array(:-, other)
+    delegate_to_array(:-, other)
   end
 
   def <=>(other)
@@ -133,7 +133,7 @@ module RandomReadable
   # Do not override Object#clone and Object#dup
 
   def combination(n)
-    deletage_to_array(:combination, n)
+    delegate_to_array(:combination, n)
   end
 
   def compact

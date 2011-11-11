@@ -330,5 +330,35 @@ class TestReadAccessable < Test::Unit::TestCase
     end
   end
 
+  def test_combination
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      assert_equal([[1],[2],[3],[4]], impl.combination(1).to_a)
+      assert_equal([[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]],
+                   impl.combination(2).to_a)
+      assert_equal([[1,2,3],[1,2,4],[1,3,4],[2,3,4]],
+                   impl.combination(3).to_a)
+      assert_equal([[1,2,3,4]], impl.combination(4).to_a)
+      assert_equal([], impl.combination(-1).to_a)
+      assert_equal([[]], impl.combination(0).to_a)
+      assert_equal([], impl.combination(5).to_a)
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      (-1..5).each do |i|
+        assert_raise NotImplementedError do
+          impl.combination(i)
+        end
+      end
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+    end
+    NOSIZE_IMPLS.each do |klass|
+    end
+  end
+
 end
 
