@@ -284,26 +284,26 @@ class TestReadAccessable < Test::Unit::TestCase
   def test_assoc
     FULL_IMPLS.each do |klass|
       impl = klass.new([[1,15], [2,25], [3,35]])
-      assert_equal([1, 25], impl.assoc(1))
+      assert_equal([1, 15], impl.assoc(1))
       assert_equal([2, 25], impl.assoc(2))
-      assert_equal([3, 25], impl.assoc(3))
+      assert_equal([3, 35], impl.assoc(3))
       assert_nil(impl.assoc(100))
       assert_nil(impl.assoc(15))
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new([[1,15], [2,25], [3,35]])
-      assert_equal([1, 25], impl.assoc(1))
+      assert_equal([1, 15], impl.assoc(1))
       assert_equal([2, 25], impl.assoc(2))
-      assert_equal([3, 25], impl.assoc(3))
+      assert_equal([3, 35], impl.assoc(3))
       [100, 15].each do |n|
-        assert_raise do
+        assert_raise ErrorForTest do
           impl.assoc(n)
         end
       end
     end
   end
 
-  test_at
+  def test_at
     FULL_IMPLS.each do |klass|
       impl = klass.new((0...10).to_a)
       assert_nil(impl.at(-11))

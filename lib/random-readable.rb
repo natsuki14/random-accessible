@@ -107,8 +107,8 @@ module RandomReadable
   end
 
   def assoc(key)
-    enum = has_size? ? each : cycle
-    enum.each do |el|
+    enum = has_size? ? :each : :cycle
+    send(enum) do |el|
       if el.respond_to?(:[]) && !el.empty? && el[0] == key
         return el
       end
