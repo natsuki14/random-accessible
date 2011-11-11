@@ -86,9 +86,10 @@ module RandomReadable
       if has_size?
         first += size if first < 0
         last += size if last < 0
+        last -= 1 if range.exclude_end?
         if first == size || (first == 0 && last < 0)
           return []
-        elsif first < 0 || size < first || last < 0
+        elsif first < 0 || size < first
           return nil
         end
         return Enumerator.new do |y|
@@ -172,6 +173,7 @@ module RandomReadable
   end
 
   def eql?(other)
+    return false unless self.class.eql?(other.class)
     return super(other) unless has_size?
 
     each_index do |i|
@@ -185,7 +187,7 @@ module RandomReadable
       raise ArgumentError, "wrong number of arguments (#{args.size + 1} for 1..2)"
     end
 
-    if nth < -size || size <= nth
+    if has_size? && (nth < -size || size <= nth)
       if block != nil
         # TODO: Warn if ifnone value is present.
         return block.call
@@ -208,8 +210,8 @@ module RandomReadable
 
     if args.size == 1
       width = args[0]
-      width = [width, size].max if has_size?
- 
+      width = [width, size].min if has_size?
+
       return self[0...width]
     else
       return at(0)
@@ -223,7 +225,11 @@ module RandomReadable
   def hash
     return super unless has_size?
 
-    delegate_to_array(:hash)
+    res = 0
+    each do |el|
+      res += el.hash
+    end
+    return res
   end
 
   def include?(val = nil, &block)

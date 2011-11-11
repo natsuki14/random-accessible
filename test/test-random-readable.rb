@@ -200,23 +200,44 @@ class TestReadAccessable < Test::Unit::TestCase
   def test_bracket_range
     FULL_IMPLS.each do |klass|
       impl = klass.new((0...10).to_a)
-      assert_equal(nil, impl[-12..-11])
-      assert_equal(nil, impl[-14..-10])
-      assert_equal([0, 1, 2], impl[-10..-8])
-      assert_equal([8, 9], impl[-2..-1])
-      assert_equal([1, 2, 3], impl[-9..3])
-      assert_equal([0, 1], impl[0..1])
-      assert_equal([8, 9], impl[8..9])
-      assert_equal([8, 9], impl[8..100])
-      assert_equal([], impl[10..15])
-      assert_equal(nil, impl[11..15])
-      assert_equal([], impl[-1..-2])
-      assert_equal([], impl[3..0])
-      assert_equal([], impl[-1..1])
-      assert_equal(nil, impl[15..14])
-      assert_equal(nil, impl[-11..-20])
-      assert_equal(nil, impl[15..5])
-      assert_equal([], impl[-10..-20])
+      msg = "Error in #{klass.name}"
+
+      assert_equal(nil, impl[-12..-11], msg)
+      assert_equal(nil, impl[-14..-10], msg)
+      assert_equal([0, 1, 2], impl[-10..-8], msg)
+      assert_equal([8, 9], impl[-2..-1], msg)
+      assert_equal([1, 2, 3], impl[-9..3], msg)
+      assert_equal([0, 1], impl[0..1], msg)
+      assert_equal([8, 9], impl[8..9], msg)
+      assert_equal([8, 9], impl[8..100], msg)
+      assert_equal([], impl[10..15], msg)
+      assert_equal(nil, impl[11..15], msg)
+      assert_equal([], impl[-1..-2], msg)
+      assert_equal([], impl[3..0], msg)
+      assert_equal([], impl[-1..1], msg)
+      assert_equal(nil, impl[15..14], msg)
+      assert_equal(nil, impl[-11..-20], msg)
+      assert_equal(nil, impl[15..5], msg)
+      assert_equal([], impl[-10..-20],msg)
+
+      assert_equal(nil, impl[-12...-10], msg)
+      assert_equal(nil, impl[-14...-9], msg)
+      assert_equal([0, 1, 2], impl[-10...-7], msg)
+      assert_equal([], impl[-2...0], msg)
+      assert_equal([1, 2, 3], impl[-9...4], msg)
+      assert_equal([0, 1], impl[0...2], msg)
+      assert_equal([8, 9], impl[8...10], msg)
+      assert_equal([8, 9], impl[8...100], msg)
+      assert_equal([], impl[10...15], msg)
+      assert_equal(nil, impl[11...15], msg)
+      assert_equal([], impl[-1...-1], msg)
+      assert_equal([], impl[0...0], msg)
+      assert_equal([3, 4, 5, 6, 7, 8], impl[3...-1], msg)
+      assert_equal([], impl[-1...2], msg)
+      assert_equal(nil, impl[16...15], msg)
+      assert_equal(nil, impl[-11...-20], msg)
+      assert_equal(nil, impl[15...5], msg)
+      assert_equal([], impl[-10...-20], msg)
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new((0...10).to_a)
@@ -333,14 +354,14 @@ class TestReadAccessable < Test::Unit::TestCase
   def test_combination
     FULL_IMPLS.each do |klass|
       impl = klass.new([1, 2, 3, 4])
+      assert_equal([], impl.combination(-1).to_a)
+      assert_equal([[]], impl.combination(0).to_a)
       assert_equal([[1],[2],[3],[4]], impl.combination(1).to_a)
       assert_equal([[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]],
                    impl.combination(2).to_a)
       assert_equal([[1,2,3],[1,2,4],[1,3,4],[2,3,4]],
                    impl.combination(3).to_a)
       assert_equal([[1,2,3,4]], impl.combination(4).to_a)
-      assert_equal([], impl.combination(-1).to_a)
-      assert_equal([[]], impl.combination(0).to_a)
       assert_equal([], impl.combination(5).to_a)
     end
     NOSIZE_IMPLS.each do |klass|
@@ -350,6 +371,239 @@ class TestReadAccessable < Test::Unit::TestCase
           impl.combination(i)
         end
       end
+    end
+  end
+
+  def test_compact
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, nil, 2, nil, 3, nil])
+      assert_equal([1, 2, 3], impl.compact)
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([1, nil, 2, nil, 3, nil])
+      assert_raise NotImplementedError do
+        impl.compact
+      end
+    end
+  end
+
+  def test_cycle
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([0, 1, 2])
+      i = 0
+      impl.cycle do |el|
+        assert_equal(i % 3, el)
+        i += 1
+        break if i > 100
+      end
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([0, 1, 2])
+      i = 0
+      assert_raise ErrorForTest do
+        impl.cycle do |el|
+          if i < 3
+            assert_equal(i, el)
+          end
+          i += 1
+        end
+      end
+    end
+  end
+
+  def test_each
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 4, 9, 16])
+      i = 1
+      impl.each do |el|
+        assert_equal(i * i, el)
+        i += 1
+      end
+      assert_equal(4, i - 1)
+      assert_equal([1, 4, 9, 16], impl.each.to_a)
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([])
+      assert_raise NotImplementedError do
+        impl.each.next
+      end
+      assert_raise NotImplementedError do
+        impl.each do
+          assert_fail
+        end
+      end
+    end
+  end
+
+  def test_each_index
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4, 5])
+      n = 0
+      impl.each_index do |i|
+        assert_equal(n, i)
+        n += 1
+      end
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([])
+      assert_raise NotImplementedError do
+        impl.each_index do
+          assert_fail
+        end
+      end
+    end
+  end
+
+  def test_empty
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+      assert_equal(true, impl.empty?)
+
+      impl = klass.new([1])
+      assert_equal(false, impl.empty?)
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([])
+      assert_equal(false, impl.empty?)
+    end
+  end
+
+  def test_eql?
+    FULL_IMPLS.each do |klass|
+      next if klass == Array
+
+      impl1 = klass.new(["a", "b", "c"])
+      impl2 = klass.new(["a", "b", "c"])
+      assert_equal(true, impl1.eql?(impl2))
+
+      assert_equal(false, impl1.eql?(["a", "b", "c"]))
+      assert_equal(false, ["a", "b", "c"].eql?(impl1))
+
+      impl1 = klass.new(["a", "b", "c"])
+      impl2 = klass.new(["a", "b", "d"])
+      assert_equal(false, impl1.eql?(impl2))
+
+      impl1 = klass.new(["a", "b", 1])
+      impl2 = klass.new(["a", "b", 1.0])
+      assert_equal(false, impl1.eql?(impl2))
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl1 = klass.new(["a", "b", "c"])
+      impl2 = klass.new(["a", "b", "c"])
+      assert_equal(false, impl1.eql?(impl2))
+      assert_equal(true, impl1.eql?(impl1))
+    end
+  end
+
+  def test_fetch
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+
+      assert_equal(1, impl.fetch(-3))
+      assert_equal(3, impl.fetch(-1))
+      assert_equal(1, impl.fetch(0))
+      assert_equal(3, impl.fetch(2))
+
+      [-4, 3].each do |i|
+        assert_raise IndexError do
+          impl.fetch(i)
+        end
+      end
+
+      assert_equal(-1, impl.fetch(-4, -1))
+      assert_equal(1, impl.fetch(-3, -1))
+      assert_equal(3, impl.fetch(-1, -1))
+      assert_equal(1, impl.fetch(0, -1))
+      assert_equal(3, impl.fetch(2, -1))
+      assert_equal(-1, impl.fetch(3, -1))
+
+      assert_equal(-1, impl.fetch(-4) { -1 })
+      assert_equal(1, impl.fetch(-3) { -1 })
+      assert_equal(3, impl.fetch(-1) { -1 })
+      assert_equal(1, impl.fetch(0) { -1 })
+      assert_equal(3, impl.fetch(2) { -1 })
+      assert_equal(-1, impl.fetch(3) { -1 })
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+
+      assert_equal(1, impl.fetch(0))
+      assert_equal(3, impl.fetch(2))
+
+      assert_equal(1, impl.fetch(0, -1))
+      assert_equal(3, impl.fetch(2, -1))
+
+      assert_equal(1, impl.fetch(0) { -1 })
+      assert_equal(3, impl.fetch(2) { -1 })
+
+      [-4, -3, -1].each do |i|
+        assert_raise NotImplementedError do
+          impl.fetch(i)
+        end
+        assert_raise NotImplementedError do
+          impl.fetch(i, -1)
+        end
+        assert_raise NotImplementedError do
+          impl.fetch(i) { -1 }
+        end
+      end
+
+      assert_raise ErrorForTest do
+        impl.fetch(3)
+      end
+      assert_raise ErrorForTest do
+        impl.fetch(3, -1)
+      end
+      assert_raise ErrorForTest do
+        impl.fetch(3) { -1 }
+      end
+    end
+  end
+
+  def test_first
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+      assert_equal(1, impl.first)
+      assert_equal([], impl.first(0))
+      assert_equal([1], impl.first(1))
+      assert_equal([1, 2], impl.first(2))
+      assert_equal([1, 2, 3], impl.first(3))
+      assert_equal([1, 2, 3], impl.first(4))
+
+      impl = klass.new([])
+      assert_equal(nil, impl.first)
+      assert_equal([], impl.first(0))
+      assert_equal([], impl.first(1))
+    end
+    NOSIZE_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+      assert_equal(1, impl.first)
+      assert_equal([], impl.first(0))
+      assert_equal([1], impl.first(1))
+      assert_equal([1, 2], impl.first(2))
+      assert_equal([1, 2, 3], impl.first(3))
+      assert_raise ErrorForTest do 
+        impl.first(4)
+      end
+
+      impl = klass.new([])
+      assert_raise(ErrorForTest) { impl.first }
+      assert_equal([], impl.first(0))
+      assert_raise(ErrorForTest) { impl.first(1) }
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+    end
+    NOSIZE_IMPLS.each do |klass|
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+    end
+    NOSIZE_IMPLS.each do |klass|
     end
   end
 
