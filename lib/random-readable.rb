@@ -15,8 +15,8 @@ module RandomReadable
 
   alias :to_a :to_ary
 
-  def delegate_to_array(name, *args)
-    to_ary.send(name, *args)
+  def delegate_to_array(name, *args, &block)
+    to_ary.send(name, *args, &block)
   end
   private :delegate_to_array
 
@@ -133,8 +133,8 @@ module RandomReadable
 
   # Do not override Object#clone and Object#dup
 
-  def combination(n)
-    delegate_to_array(:combination, n)
+  def combination(n, &block)
+    delegate_to_array(:combination, n, &block)
   end
 
   def compact
@@ -272,6 +272,7 @@ module RandomReadable
     if n.nil?
       at(size - 1)
     else
+      n = size if n > size
       Enumerator.new do |y|
         n.times do |i|
           y << at(size - n + i)
@@ -285,8 +286,8 @@ module RandomReadable
     delegate_to_array(:pack, template)
   end
 
-  def permutation(n)
-    delegate_to_array(:permutation, n)
+  def permutation(n, &block)
+    delegate_to_array(:permutation, n, &block)
   end
 
   def product(*lists, &block)
@@ -295,7 +296,7 @@ module RandomReadable
 
   def rassoc(obj)
     each do |el|
-      if el.respond_to?(:[]) && el.size >= 2 && el[1] == key
+      if el.respond_to?(:[]) && el.size >= 2 && el[1] == obj
         return el
       end
     end
@@ -303,7 +304,7 @@ module RandomReadable
   end
 
   def repeated_combination(n, &block)
-    delgate_to_array(:repeated_combination, n, &block)
+    delegate_to_array(:repeated_combination, n, &block)
   end
 
   def repeated_permutation(n, &block)
@@ -330,13 +331,16 @@ module RandomReadable
   end
 
   def rindex(val = nil, &block)
+    i = 0
     if block.nil?
       reverse_each do |el|
-        return el if el == val
+        i += 1
+        return size - i if el == val
       end
     else
       reverse_each do |el|
-        return el if block.call(el)
+        i += 1
+        return size - i if block.call(el)
       end
     end
     return nil
@@ -353,15 +357,15 @@ module RandomReadable
     end
 
     if args.size == 1
-      n = [args[0].to_int, size].max
+      n = [args[0].to_int, size].min
       return Enumerator.new do |y|
-        each_with_index do |el, i|
-          if n > 0 && rand(size - i) <= n
-            y << el
+        each_index do |i|
+          if n > 0 && rand(size - i) < n
+            y << at(i)
             n -= 1
           end
         end
-      end.to_i
+      end.to_a.shuffle
     else
       if size == 0
         return nil
@@ -377,16 +381,22 @@ module RandomReadable
 
   alias :slice :[]
 
-  def sort(&block)
-    delegate_to_array(:sort, &block)
-  end
+  # sort is defined in Enumerable.
 
   def transpose
     delegate_to_array(:transpose)
   end
 
-  def uniq
-    delegate_to_array(:uniq)
+  def uniq(&block)
+    delegate_to_array(:uniq, &block)
+  end
+
+  def zip(*lists, &block)
+    delegate_to_array(:zip, *lists, &block)
+  end
+
+  def |(other)
+    delegate_to_array(:|, other)
   end
 
 end
