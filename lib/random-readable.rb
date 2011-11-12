@@ -1,10 +1,28 @@
+# Author:: Natsuki Kawai (natsuki.kawai@gmail.com)
+# Copyright:: Copyright 2011 Natsuki Kawai
+# License:: 2-clause BSD or Ruby's
+
+
 require 'common-traits'
 
+# A module mixin which allows integer-indexed random access
+# and provides non-destructive instance methods. Their name is same as Array.
+# The class must provide either read_access, at, or [] method.
+# The class may provide size or length method.
+# The function of at and [] must be same as Array's.
+# read_access(pos) is like "at" method, but the module guarantees the argument is positive.
+# And if the class provides size or length methods, the argument is less than size or length.
+# If the class provides neither size nor length methods, some of the methods of the module
+# raises NotImplementedError. Please see the document of each methods.
 module RandomReadable
 
   include RandomAccessible::CommonTraits
   include Enumerable
 
+  # Returns all elements of the class as an Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def to_ary
     Enumerator.new do |y|
       size.times do |i|
@@ -15,27 +33,48 @@ module RandomReadable
 
   alias :to_a :to_ary
 
+  # Creates an Array object which is equals the object.
   def delegate_to_array(name, *args, &block)
     to_ary.send(name, *args, &block)
   end
   private :delegate_to_array
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def &(other)
     delegate_to_array(:&, other)
   end
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def *(arg)
     delegate_to_array(:*, arg)
   end
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def +(other)
     delegate_to_array(:+, other)
   end
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def -(other)
     delegate_to_array(:-, other)
   end
 
+  # Same as Array.
+  # This method evaluates minimum elements needed to get results.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def <=>(other)
     min_size = [size, other.size].min
     min_size.times do |i|
@@ -45,6 +84,10 @@ module RandomReadable
     return size <=> other.size
   end
 
+  # Same as Array.
+  # This method evaluates minimum elements needed to get results.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def ==(other)
     return super unless has_size?
     return false if size != other.size
@@ -55,6 +98,12 @@ module RandomReadable
     return true
   end
 
+  # Same as Array.
+  # If the argument is one Integer, this method evaluates only one element.
+  # If the argument is a Range or start/length, this method evaluates
+  # elements in the Range or start/length.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method, and the argument is minus.
   def [](*args)
     if args.size >= 3 || args.size == 0
       raise ArgumentError, "wrong number of arguments (#{args.size} for 1..2)"
@@ -107,6 +156,10 @@ module RandomReadable
     end
   end
 
+  # Same as Array.
+  # This method sequentially evaluates the elements.
+  # Please care that this method makes an infinite loop
+  # if the class provides neither size nor lenght method.
   def assoc(key)
     enum = has_size? ? :each : :cycle
     send(enum) do |el|
@@ -117,6 +170,10 @@ module RandomReadable
     return nil
   end
 
+  # Same as Array.
+  # Thids method evaluates just one element.
+  # If the class overrides this method, the class must provide same function as Array
+  # even if the argument is minus or out-of-range.
   def at(pos)
     pos = pos.to_int
 
@@ -133,10 +190,18 @@ module RandomReadable
 
   # Do not override Object#clone and Object#dup
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method.
   def combination(n, &block)
     delegate_to_array(:combination, n, &block)
   end
 
+  # Same as Array.
+  # This method evaluates all elements of the class.
+  # This method or the Enumerator raises NotImplementedError
+  # if the class provides neither size nor length method.
   def compact
     Enumerator.new do |y|
       each do |el|
@@ -145,6 +210,8 @@ module RandomReadable
     end.to_a
   end
 
+  # Same as Array.
+  # This method sequentially evaluates the elements.
   def cycle
     if has_size?
       super
@@ -157,6 +224,10 @@ module RandomReadable
     end
   end
 
+  # Same as Array.
+  # This method sequentially evaluates the elements.
+  # This method or the Enumerator raises NotImplementedError
+  # if the class provides neither size nor length method.
   def each(&block)
     if block.nil?
       return Enumerator.new do |y|
@@ -172,6 +243,10 @@ module RandomReadable
     end
   end
 
+  # if the object provides size or length, this method is same as Array's
+  # and evaluates minimum elements needed to get results.
+  # If not, this method is same as Object's
+  # and evaluates no element.
   def eql?(other)
     return false unless self.class.eql?(other.class)
     return super(other) unless has_size?
@@ -182,6 +257,12 @@ module RandomReadable
     return true
   end
 
+  # Same as Array's.
+  # If the argument is an index, this method evaluates only one element.
+  # If the argument is start and length, this method evaluates
+  # elements in the start and length.
+  # This method raises NotImplementedError
+  # if the class provides neither size nor length method, and the argument is minus.
   def fetch(nth, *args, &block)
     if args.size >= 2
       raise ArgumentError, "wrong number of arguments (#{args.size + 1} for 1..2)"
@@ -191,7 +272,7 @@ module RandomReadable
       if block != nil
         # TODO: Warn if ifnone value is present.
         return block.call
-      elsif args.length == 1
+      elsif args.size == 1
         return args[0]
       else
         raise IndexError,
