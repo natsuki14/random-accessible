@@ -218,7 +218,8 @@ class TestReadAccessable < Test::Unit::TestCase
       assert_equal(nil, impl[15..14], msg)
       assert_equal(nil, impl[-11..-20], msg)
       assert_equal(nil, impl[15..5], msg)
-      assert_equal([], impl[-10..-20],msg)
+      assert_equal([], impl[-10..-20], msg)
+      assert_equal([], impl[1..-20], msg)
 
       assert_equal(nil, impl[-12...-10], msg)
       assert_equal(nil, impl[-14...-9], msg)
@@ -238,6 +239,7 @@ class TestReadAccessable < Test::Unit::TestCase
       assert_equal(nil, impl[-11...-20], msg)
       assert_equal(nil, impl[15...5], msg)
       assert_equal([], impl[-10...-20], msg)
+      assert_equal([], impl[1...-20], msg)
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new((0...10).to_a)
@@ -593,8 +595,11 @@ class TestReadAccessable < Test::Unit::TestCase
     end
   end
 
-  def test_foo
+  def test_flatten
     FULL_IMPLS.each do |klass|
+      impl = klass.new([1, [2, 3, [4], 5]])
+      assert_equal([1, 2, 3, 4, 5], impl.flatten)
+      assert_equal([1, 2, 3, [4], 5], impl.flatten(1))
     end
     NOSIZE_IMPLS.each do |klass|
     end

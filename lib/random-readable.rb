@@ -218,8 +218,8 @@ module RandomReadable
     end
   end
 
-  def flatten
-    delegate_to_array(:flatten)
+  def flatten(lv = nil)
+    delegate_to_array(:flatten, lv)
   end
 
   def hash
