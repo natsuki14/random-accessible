@@ -1187,23 +1187,31 @@ class TestReadAccessable < Test::Unit::TestCase
 
   def test_values_at
     FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
       impl = klass.new([1, 2, 3, 4, 5])
-      assert_equal([1, 3, 5], impl.values_at(0, 2, 4))
+      assert_equal([1, 3, 5], impl.values_at(0, 2, 4), msg)
       assert_equal([nil, 1, 5, 1, 5, nil, nil],
-                   impl.values_at(-6, -5, -1, 0, 4, 5, 100))
-      assert_equal([2, 3], impl.values_at(1..2))
-      assert_equal([4, 5, nil], impl.values_at(3..10))
-      assert_equal([], impl.values_at(6..7))
-      assert_equal([5, 4, 5, 1], impl.values_at(-1, 3..4, 0))
+                   impl.values_at(-6, -5, -1, 0, 4, 5, 100),
+                   msg)
+      assert_equal([2, 3], impl.values_at(1..2), msg)
+      assert_equal([4, 5, nil], impl.values_at(3..10), msg)
+      assert_equal([], impl.values_at(6..7), msg)
+      assert_equal([5, 4, 5, 1],
+                   impl.values_at(-1, 3..4, 0), msg)
+      assert_equal([2, 3], impl.values_at(1...3), msg)
+      assert_equal([4, 5], impl.values_at(3...11), msg)
+      assert_equal([], impl.values_at(6...8), msg)
+      assert_equal([5, 4, 5, 1],
+                   impl.values_at(-1, 3...5, 0), msg)
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new([1, 2, 3, 4, 5])
       assert_equal([1, 3, 5], impl.values_at(0, 2, 4))
       assert_raise(NotImplementedError) { impl.values_at(-6, 0) }
-      assert_raise(ErrorForTesting) { impl.values_at(0, 5) }
+      assert_raise(ErrorForTest) { impl.values_at(0, 5) }
       assert_equal([2, 3], impl.values_at(1..2))
-      assert_raise(ErrorForTesting) { impl.values_at(3..10) }
-      assert_raise(ErrorForTesting) { impl.values_at(6..7) }
+      assert_raise(ErrorForTest) { impl.values_at(3..10) }
+      assert_raise(ErrorForTest) { impl.values_at(6..7) }
       assert_raise(NotImplementedError) { impl.values_at(-1, 3..4, 0) }
     end
   end

@@ -10,7 +10,7 @@ require 'common-traits'
 # The class must provide either read_access, at, or [] method.
 # The class may provide size or length method.
 # The function of at and [] must be same as Array's.
-# read_access(pos) is like "at" method, but the module guarantees the argument is positive.
+# read_access(pos) is similar to "at" method, but the module guarantees the argument is positive.
 # And if the class provides size or length methods, the argument is less than size or length.
 # If the class provides neither size nor length methods, some of the methods of the module
 # raises NotImplementedError. Please see the document of each methods.
@@ -33,7 +33,6 @@ module RandomReadable
 
   alias :to_a :to_ary
 
-  # Creates an Array object which is equals the object.
   def delegate_to_array(name, *args, &block)
     to_ary.send(name, *args, &block)
   end
@@ -470,6 +469,26 @@ module RandomReadable
 
   def uniq(&block)
     delegate_to_array(:uniq, &block)
+  end
+
+  def values_at(*selectors)
+    Enumerator.new do |y|
+      selectors.each do |s|
+        if s.is_a? Range
+          subary = self[s]
+          unless subary.nil?
+            self[s].each do |el|
+              y << el
+            end
+          end
+          if has_size? && !s.exclude_end? && s.include?(size)
+            y << nil
+          end
+        else
+          y << self[s.to_int]
+        end
+      end
+    end.to_a
   end
 
   def zip(*lists, &block)
