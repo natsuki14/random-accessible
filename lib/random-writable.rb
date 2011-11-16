@@ -8,6 +8,9 @@ module RandomWritable
     if pos < 0
       pos = size + pos
     end
+    if has_size? && size <= pos
+      expand(pos - size + 1)
+    end
     replace_access(pos, val)
     return self
   end
@@ -35,12 +38,15 @@ module RandomWritable
   end
 
   def <<(obj)
-    replace_access(size, obj)
+    index = size
+    expand(1)
+    replace_access(index, obj)
+    return self
   end
 
   def []=(*args)
     if args.size <= 1 || 4 <= args.size
-      ArgumentError, "wrong number of arguments (#{args.size} for 2..3)"
+      raise ArgumentError, "wrong number of arguments (#{args.size} for 2..3)"
     end
 
     val = args.pop
@@ -54,6 +60,14 @@ module RandomWritable
         val = val.to_ary
       else
         val = [val]
+      end
+      if has_size?
+        if start + len > size
+          len = size - start + 1
+        end
+        if len <= 0
+          len = 1
+        end
       end
       if val.size < len
         val.size.times do |i|
@@ -75,7 +89,10 @@ module RandomWritable
       if range.first < -size
         raise RangeError, "#{range.to_s} out of range"
       end
-      self[range.first, range.length]
+      first = range.first
+      last = range.last
+      last += 1 unless range.exclude_end?
+      self[first, last - first] = val
     else
       replace_at(args[0].to_int, val)
     end
@@ -112,7 +129,7 @@ module RandomWritable
       end
     elsif args.size != 0
       start = args[0].to_int
-      len = args.size == 2 ? args[1], size
+      len = args.size == 2 ? args[1] : size
       if block.nil?
         args[1].times do |i|
           replace_at(start + i, val)
