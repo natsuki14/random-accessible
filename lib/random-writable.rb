@@ -4,6 +4,14 @@ module RandomWritable
 
   include RandomAccessible::CommonTraits
 
+  def insert_access(pos, val)
+    raise NotImplementedError
+  end
+
+  def delete_access(pos)
+    raise NotImplementedError
+  end
+
   def replace_at(pos, val)
     if pos < 0
       pos = size + pos
@@ -33,8 +41,10 @@ module RandomWritable
     if pos < 0
       pos = size + pos
     end
-    delete_access(pos)
-    return nil
+    if pos < 0 || (has_size? && size <= pos)
+      return nil
+    end
+    return delete_access(pos)
   end
 
   def <<(obj)
@@ -53,8 +63,14 @@ module RandomWritable
     if args.size == 2
       start = args[0].to_int
       len = args[1].to_int
-      if start < -size
-        raise IndexError, "index #{start} too small for array; minimun: #{-size}"
+      if has_size?
+        if start < -size
+          raise IndexError, "index #{start} too small for array; minimun: #{-size}"
+        end
+      else
+        if start < 0
+          raise IndexError, "index #{start} too small for array; minimun: 0"
+        end
       end
       if val.respond_to? :to_ary
         val = val.to_ary
@@ -70,23 +86,27 @@ module RandomWritable
         end
       end
       if val.size < len
-        val.size.times do |i|
-          replace_at(start + i, val[i])
-        end
         (len - val.size).times do
           delete_at(start + val.size)
+        end
+        val.size.times do |i|
+          replace_at(start + i, val[i])
         end
       elsif val.size >= len
         len.times do |i|
           replace_at(start + i, val[i])
         end
         (val.size - len).times do |i|
-          insert_at(start + len + i, val[i])
+          insert_at(start + len + i, val[len + i])
         end
       end
     elsif args[0].is_a? Range
       range = args[0]
-      if range.first < -size
+      if !has_size?
+        if range.first < 0
+          raise RangeError, "#{range.to_s} out of range"
+        end
+      elsif range.first < -size
         raise RangeError, "#{range.to_s} out of range"
       end
       first = range.first
@@ -103,8 +123,8 @@ module RandomWritable
   end
 
   def concat(other)
-    expand(other.size)
     i = size
+    expand(other.size)
     other.each do |el|
       replace_at(i, el)
       i += 1
