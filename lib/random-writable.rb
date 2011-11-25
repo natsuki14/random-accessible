@@ -33,6 +33,9 @@ module RandomWritable
     if pos < 0
       pos = size + pos + 1
     end
+    if pos < 0
+      raise IndexError, "index is too small"
+    end
     insert_access(pos, val)
     return self
   end
@@ -132,8 +135,8 @@ module RandomWritable
   end
 
   def fill(*args, &block)
-    if args.size >= (block.nil? ? 3 : 2) ||
-       args.size <= (block.nil? ? 1 : 0)
+    if args.size > (block.nil? ? 3 : 2) ||
+       args.size < (block.nil? ? 1 : 0)
       raise ArgumentError, "wrong number of arguments (#{args.size})"
     end
 
@@ -156,20 +159,42 @@ module RandomWritable
         end
       else
         args[1].times do |i|
-          replace_at(start + i, block.call(i))
+          index = start + i
+          replace_at(index, block.call(index))
         end
       end
     else
       size.times do |i|
-        replace_at(i, val)
+        if block.nil?
+          replace_at(i, val)
+        else
+          replace_at(i, block.call(i))
+        end
       end
     end
   end
 
   def insert(nth, *val)
     val.each_with_index do |el, i|
-      insert_at(nth, el)
+      if nth > 0
+        insert_at(nth + i, el)
+      else
+        insert_at(nth, el)
+      end
     end
+  end
+
+  def pop(*args)
+    if args.size > 1
+      raise ArgumentError, "wrong number of arguments (#{args.size})"
+    end
+
+    n = 1
+    if args.size == 1
+      n = args[0].to_int
+    end
+    trim(n)
+    return nil
   end
 
   def push(*obj)

@@ -27,6 +27,7 @@ class WriExp
   def trim(n)
     @a.pop(n)
     @size -= n
+    @size = 0 if @size < 0
   end
 
   def replace_access(pos, val)
@@ -309,56 +310,192 @@ class TestRandomWritable < Test::Unit::TestCase
       assert_equal([1, 2, 3, 4, 5], impl.to_ary)
     end
   end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NODELETE_IMPLS.each do |klass|
-      impl = klass.new([])
+
+  def test_fill_val
+    (FULL_IMPLS + NODELETE_IMPLS).each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      impl.fill(10)
+      assert_equal([10, 10, 10, 10], impl.to_ary)
+
+      impl = klass.new([1, 2, 3])
+      impl.fill { |i| -i }
+      assert_equal([0, -1, -2], impl.to_ary)
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      impl = klass.new([1, 2])
+      assert_raise(NotImplementedError) { impl.fill(0) }
+      assert_equal([1, 2], impl.to_ary)
+
+      assert_raise(NotImplementedError) { impl.fill { |i| i } }
+      assert_equal([1, 2], impl.to_ary)
     end
   end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NODELETE_IMPLS.each do |klass|
-      impl = klass.new([])
+
+  def test_fill_start_length
+    (FULL_IMPLS + NODELETE_IMPLS).each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      impl.fill(10, 0, 2)
+      assert_equal([10, 10, 3, 4], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(-1, 1, 2)
+      assert_equal([10, -1, -1, 4], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(0, 2, 2)
+      assert_equal([10, -1, 0, 0], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(1, 3, 3)
+      assert_equal([10, -1, 0, 1, 1, 1], impl.to_ary)
+      assert_equal(6, impl.size)
+
+      impl.fill(2, 6, 1)
+      assert_equal([10, -1, 0, 1, 1, 1, 2], impl.to_ary)
+      assert_equal(7, impl.size)
+
+      impl.fill(3, 8, 3)
+      assert_equal([10, -1, 0, 1, 1, 1, 2, nil, 3, 3, 3], impl.to_ary)
+      assert_equal(11, impl.size)
+
+      impl = klass.new([1, 2, 3, 4])
+      impl.fill(0, 2) { |i| 10 }
+      assert_equal([10, 10, 3, 4], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(1, 2) { |i| -1 }
+      assert_equal([10, -1, -1, 4], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(2, 2) { |i| i * 0 }
+      assert_equal([10, -1, 0, 0], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl.fill(3, 3) { |i| 1 }
+      assert_equal([10, -1, 0, 1, 1, 1], impl.to_ary)
+      assert_equal(6, impl.size)
+
+      impl.fill(6, 1) { |i| i - 4 }
+      assert_equal([10, -1, 0, 1, 1, 1, 2], impl.to_ary)
+      assert_equal(7, impl.size)
+
+      impl.fill(8, 3) { |i| i }
+      assert_equal([10, -1, 0, 1, 1, 1, 2, nil, 8, 9, 10], impl.to_ary)
+      assert_equal(11, impl.size)
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      impl = klass.new([1, 2, 3, 4])
+      impl.fill(10, 0, 2)
+      assert_equal([10, 10, 3, 4], impl.to_ary)
+
+      impl.fill(-1, 1, 2)
+      assert_equal([10, -1, -1, 4], impl.to_ary)
+
+      impl.fill(0, 2, 2)
+      assert_equal([10, -1, 0, 0], impl.to_ary)
+
+      impl.fill(1, 3, 3)
+      assert_equal([10, -1, 0, 1, 1, 1], impl.to_ary)
+
+      impl.fill(2, 6, 1)
+      assert_equal([10, -1, 0, 1, 1, 1, 2], impl.to_ary)
+
+      impl.fill(3, 8, 3)
+      assert_equal([10, -1, 0, 1, 1, 1, 2, nil, 3, 3, 3], impl.to_ary)
+
+      impl = klass.new([1, 2, 3, 4])
+      impl.fill(0, 2) { |i| 10 }
+      assert_equal([10, 10, 3, 4], impl.to_ary)
+
+      impl.fill(1, 2) { |i| -1 }
+      assert_equal([10, -1, -1, 4], impl.to_ary)
+
+      impl.fill(2, 2) { |i| i * 0 }
+      assert_equal([10, -1, 0, 0], impl.to_ary)
+
+      impl.fill(3, 3) { |i| 1 }
+      assert_equal([10, -1, 0, 1, 1, 1], impl.to_ary)
+
+      impl.fill(6, 1) { |i| i - 4 }
+      assert_equal([10, -1, 0, 1, 1, 1, 2], impl.to_ary)
+
+      impl.fill(8, 3) { |i| i }
+      assert_equal([10, -1, 0, 1, 1, 1, 2, nil, 8, 9, 10], impl.to_ary)
     end
   end
-  def test_foo
+
+  def test_insert
     FULL_IMPLS.each do |klass|
-      impl = klass.new([])
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3])
+      impl.insert(2, -1, -2)
+      assert_equal([1, 2, -1, -2, 3], impl.to_ary, msg)
+      assert_equal(5, impl.size, msg)
+
+      impl = klass.new([1, 2, 3])
+      impl.insert(-2, -1, -2, -3)
+      assert_equal([1, 2, -1, -2, -3, 3], impl.to_ary, msg)
+      assert_equal(6, impl.size, msg)
     end
     NODELETE_IMPLS.each do |klass|
-      impl = klass.new([])
+      impl = klass.new([1, 2, 3])
+      assert_raise(NotImplementedError) { impl.insert(2, -1, -2) }
+      assert_equal([1, 2, 3], impl.to_ary)
+      assert_equal(3, impl.size)
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3])
+      impl.insert(2, -1, -2)
+      assert_equal([1, 2, -1, -2, 3], impl.to_ary, msg)
+
+      impl = klass.new([1, 2, 3])
+      assert_raise(NotImplementedError) { impl.insert(-2, -1, -2, -3) }
+      assert_equal([1, 2, 3], impl.to_ary, msg)
     end
   end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NODELETE_IMPLS.each do |klass|
-      impl = klass.new([])
+
+  def test_pop
+    (FULL_IMPLS + NODELETE_IMPLS).each do |klass|
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop
+      assert_equal([1, 2, 3, 4], impl.to_ary)
+      assert_equal(4, impl.size)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop(3)
+      assert_equal([1, 2], impl.to_ary)
+      assert_equal(2, impl.size)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop(100)
+      assert_equal([], impl.to_ary)
+      assert_equal(0, impl.size)
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop
+      assert_equal([1, 2, 3, 4], impl.to_ary)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop(3)
+      assert_equal([1, 2], impl.to_ary)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.pop(100)
+      assert_equal([], impl.to_ary)
     end
   end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
+
+  def test_push
+    (FULL_IMPLS + NODELETE_IMPLS).each do |klass|
+      impl = klass.new([1])
+      impl.push(2, 3)
+      assert_equal([1, 2, 3], impl.to_ary)
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new([])
+      assert_raise(NotImplementedError) { impl.push(2, 3) }
     end
   end
   def test_foo
