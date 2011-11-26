@@ -230,4 +230,19 @@ module RandomWritable
     return res
   end
 
+  def shift(*args)
+    if args.size > 1
+      raise ArgumentError, "wrong number of arguments(#{args.size})"
+    end
+
+    n = 1
+    unless args.empty?
+      n = args[0].to_int
+    end
+    n.times do
+      delete_at(0)
+    end
+    return nil
+  end
+
 end

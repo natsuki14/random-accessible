@@ -498,68 +498,67 @@ class TestRandomWritable < Test::Unit::TestCase
       assert_raise(NotImplementedError) { impl.push(2, 3) }
     end
   end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
+
+  def test_replace
+    (FULL_IMPLS + NODELETE_IMPLS).each do |klass|
+      impl = klass.new([1, 2, 3])
+      impl.replace([4, 5, 6])
+      assert_equal([4, 5, 6], impl.to_ary)
+      assert_equal(3, impl.size)
+
+      impl = klass.new([1, 2, 3])
+      impl.replace([4, 5])
+      assert_equal([4, 5], impl.to_ary)
+      assert_equal(2, impl.size)
+
+      impl = klass.new([1, 2, 3])
+      impl.replace([4, 5, 6, 7])
+      assert_equal([4, 5, 6, 7], impl.to_ary)
+      assert_equal(4, impl.size)
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      impl = klass.new([1, 2])
+      assert_raise(NotImplementedError) { impl.replace([]) }
+      assert_equal([1, 2], impl.to_ary)
     end
   end
-  def test_foo
+
+  def test_shift
     FULL_IMPLS.each do |klass|
-      impl = klass.new([])
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3])
+      impl.shift
+      assert_equal([2, 3], impl.to_ary, msg)
+      assert_equal(2, impl.size, msg)
+
+      impl = klass.new([1, 2, 3])
+      impl.shift(2)
+      assert_equal([3], impl.to_ary, msg)
+      assert_equal(1, impl.size, msg)
+
+      impl = klass.new([1, 2, 3])
+      impl.shift(5)
+      assert_equal([], impl.to_ary, msg)
+      assert_equal(0, impl.size, msg)
+    end
+    NODELETE_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      assert_raise(NotImplementedError) { impl.shift }
+      assert_raise(NotImplementedError) { impl.shift(2) }
     end
     NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-  end
-  def test_foo
-    FULL_IMPLS.each do |klass|
-      impl = klass.new([])
-    end
-    NOSIZE_IMPLS.each do |klass|
-      impl = klass.new([])
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3])
+      impl.shift
+      assert_equal([2, 3], impl.to_ary, msg)
+
+      impl = klass.new([1, 2, 3])
+      impl.shift(2)
+      assert_equal([3], impl.to_ary, msg)
+
+      impl = klass.new([1, 2, 3])
+      assert_raise(ErrorForTest) { impl.shift(5) }
+      assert_equal([], impl.to_ary, msg)
     end
   end
   
