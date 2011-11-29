@@ -1,82 +1,421 @@
 require 'test/unit'
 require 'random-accessible'
 
-class Impl
+class FullImpl
 
   include RandomAccessible
 
   def initialize(ary)
     @a = ary
+    @size = ary.size
   end
 
-  def [](pos)
-    raise ArgumentError unless pos.is_a? Numeric
+  def read_access(pos)
+    if pos < 0 || @size <= pos
+      raise ErrorForTest, "size=#{@size} pos=#{pos}"
+    end
     @a.at(pos)
   end
 
-  def []=(pos, obj)
-    raise ArgumentError unless pos.is_a? Numeric
+  def replace_access(pos, obj)
+    if pos < 0 || @size <= pos
+      raise ErrorForTest, "size=#{@size} pos=#{pos}"
+    end
     @a[pos] = obj
   end
 
+  def expand(n)
+    @size += n
+  end
+
+  def trim(n)
+    @size -= n
+    @a.pop(n)
+  end
+
   def size
-    @a.size
+    @size
   end
 
 end
 
+FULL_IMPLS = [Array, FullImpl]
+
 class TestRandomAccesible < Test::Unit::TestCase
 
-  def setup
-    @origs = [[1, 2, 3], ['a', :b, 3, [0], 2], Array.new(100){|i|i}]
-    @impls = @origs.map do |el|
-      Impl.new el.clone
-    end
-    @test_num = @origs.size
-  end
-
-  def each
-    @test_num.times do |i|
-      yield @origs[i], @impls[i]
-    end
-  end
-
-  def test_bracket_range
-    each do |orig, impl|
-      [0..0, 0..2, -2..-1, -2..1, 2..20, -20..-2].each do |r|
-        assert_equal(orig[r], impl[r])
+  def test_collect!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+      impl.collect! do |el|
+        el * 3
       end
-    end
-  end
+      assert_equal([3, 6, 9], impl)
+      assert_equal(3, impl.size)
 
-  def test_each_with_block
-    each do |orig, impl|
-      enum = orig.each
-      result = impl.each do |el|
-        assert_equal(enum.next, el)
+      impl = klass.new([1, 2, 3])
+      e = impl.map!
+      e.each do |el|
+        el ** 2
       end
-
-      assert_equal(orig, result)
+      assert_equal([1, 4, 9], impl)
+      assert_equal(3, impl.size)
     end
   end
 
-  def test_each_without_block
-    each do |orig, impl|
-      enum = impl.each
-      assert_equal(orig, enum.to_a)
-      
-      orig[1] = 0
-      impl[1] = 0
-      assert_equal(orig, enum.to_a)
-
-      orig[2] = 1
-      impl[2] = 1
-      assert_equal(orig, enum.to_a)
-
-      orig[3] = -1
-      impl[3] = -1
-      assert_equal(orig, enum.to_a)
+  def test_compact!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, nil, 2, nil, 3, nil])
+      assert_same(impl, impl.compact!)
+      assert_equal([1, 2, 3], impl)
+      assert_equal(3, impl.size)
+      assert_equal(nil, impl.compact!)
+      assert_equal([1, 2, 3], impl)
+      assert_equal(3, impl.size)
     end
   end
+
+  def test_delete
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 2.0, 1])
+      assert_equal(2, impl.delete(2))
+      assert_equal([1, 3, 1], impl)
+      assert_equal(3, impl.size)
+
+      impl = klass.new([1, 2.0, 3, 2.0, 1])
+      assert_equal(2, impl.delete(2))
+      assert_equal([1, 3, 1], impl)
+      assert_equal(3, impl.size)
+
+      assert_equal(nil, impl.delete(2))
+      assert_equal([1, 3, 1], impl)
+      assert_equal(3, impl.size)
+
+      impl = klass.new([1, 2.0, 3, 2.0, 1])
+      assert_equal(2, impl.delete(2) { "foo" * 2 })
+      assert_equal([1, 3, 1], impl)
+      assert_equal(3, impl.size)
+
+      assert_equal("barbar", impl.delete(2) { "bar" * 2 })
+      assert_equal([1, 3, 1], impl)
+      assert_equal(3, impl.size)
+    end
+  end
+
+  def test_delete_at
+    FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3, 4, 5])
+      assert_equal(2, impl.delete_at(1), msg)
+      assert_equal([1, 3, 4, 5], impl, msg)
+      assert_equal(4, impl.size, msg)
+
+      assert_equal(1, impl.delete_at(-4), msg)
+      assert_equal([3, 4, 5], impl, msg)
+      assert_equal(3, impl.size, msg)
+
+      assert_equal(nil, impl.delete_at(-4), msg)
+      assert_equal([3, 4, 5], impl, msg)
+      assert_equal(3, impl.size, msg)
+      assert_equal(nil, impl.delete_at(3), msg)
+      assert_equal([3, 4, 5], impl, msg)
+      assert_equal(3, impl.size, msg)
+    end
+  end
+
+  def test_delete_if
+    FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3, 4, 5])
+      assert_same(impl, impl.delete_if { |x| x % 2 != 0 }, msg)
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+      assert_same(impl, impl.delete_if { |x| x % 2 != 0 }, msg)
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      e = impl.delete_if
+      e.each { |x| x % 2 != 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+    end
+  end
+
+  def test_reject!
+    FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3, 4, 5])
+      assert_same(impl, impl.reject! { |x| x % 2 != 0 }, msg)
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+      assert_same(nil, impl.reject! { |x| x % 2 != 0 }, msg)
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      e = impl.reject!
+      e.each { |x| x % 2 != 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+    end
+  end
+
+  # TODO: Delete me.
+  def test_fill_start_length
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([0, 1, 2, 3 ,4])
+      impl.fill(-1, 0, 3)
+      assert_equal([-1, -1, -1, 3, 4], impl)
+      assert_equal(5, impl.size)
+
+      impl = klass.new([0, 1, 2, 3 ,4])
+      impl.fill(-1, 2, 3)
+      assert_equal([0, 1, -1, -1, -1], impl)
+      assert_equal(5, impl.size)
+
+      impl = klass.new([0, 1, 2, 3 ,4])
+      impl.fill(-1, 2, 5)
+      assert_equal([0, 1, -1, -1, -1, -1, -1], impl)
+      assert_equal(7, impl.size)
+
+      impl = klass.new([0, 1, 2, 3 ,4])
+      impl.fill(-1, 7, 3)
+      assert_equal([0, 1, 2, 3, 4, nil, nil, -1, -1, -1], impl)
+      assert_equal(10, impl.size)
+    end
+  end
+
+  def test_flatten!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, [2, 3, [4], 5]])
+      assert_same(impl, impl.flatten!(1))
+      assert_equal([1, 2, 3, [4], 5], impl)
+      assert_equal(5, impl.size)
+
+      impl = klass.new([1, 2, 3])
+      assert_equal(nil, impl.flatten!)
+      assert_equal([1, 2, 3], impl)
+      assert_equal(3, impl.size)
+    end
+  end
+
+  def test_keep_if
+    FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.keep_if { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+      impl.keep_if { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      e = impl.keep_if
+      e.each { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+    end
+  end
+
+  def test_pop
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4, 5])
+      assert_equal(5, impl.pop)
+      assert_equal([1, 2, 3, 4], impl)
+      assert_equal(4, impl.size)
+
+      assert_equal([3, 4], impl.pop(2))
+      assert_equal([1, 2], impl)
+      assert_equal(2, impl.size)
+
+      assert_equal([1, 2], impl.pop(3))
+      assert_equal([], impl)
+      assert_equal(0, impl.size)
+
+      assert_equal(nil, impl.pop)
+      assert_equal([], impl)
+      assert_equal(0, impl.size)
+
+      assert_equal([], impl.pop(3))
+      assert_equal([], impl)
+      assert_equal(0, impl.size)
+    end
+  end
+
+  def test_reverse!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+      assert_same(impl, impl.reverse!)
+      assert_equal([3, 2, 1], impl)
+      assert_equal(3, impl.size)
+    end
+  end
+
+  def test_rotate!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3, 4])
+      impl.rotate!
+      assert_equal([2, 3, 4, 1], impl)
+      impl.rotate!(2)
+      assert_equal([4, 1, 2, 3], impl)
+      impl.rotate!(-3)
+      assert_equal([1, 2, 3, 4], impl)
+    end
+  end
+
+  def test_select!
+    FULL_IMPLS.each do |klass|
+      msg = "Error in #{klass.name}"
+      impl = klass.new([1, 2, 3, 4, 5])
+      impl.select! { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+      impl.select! { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+
+      impl = klass.new([1, 2, 3, 4, 5])
+      e = impl.select!
+      e.each { |x| x % 2 == 0 }
+      assert_equal([2, 4], impl, msg)
+      assert_equal(2, impl.size, msg)
+    end
+  end
+
+  def test_shuffle!
+    FULL_IMPLS.each do |klass|
+      orig = [1, 2, 3, 4, 5]
+      impl = klass.new(orig.clone)
+      res = 10000.times do
+        impl.shuffle!
+        break false if orig != impl
+      end
+      assert(!res, "#{klass.name}#shuffle! failed.")
+      assert_equal(5, impl.size)
+      impl.sort!
+      assert_equal([1, 2, 3, 4, 5], impl)
+    end
+  end
+
+  def test_slice_pos!
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([1, 2, 3])
+      assert_equal(2, impl.slice!(1))
+      assert_equal([1, 3], impl)
+      assert_equal(2, impl.size)
+
+      assert_equal(3, impl.slice!(-1))
+      assert_equal([1], impl)
+      assert_equal(1, impl.size)
+
+      assert_equal(nil, impl.slice!(100))
+      assert_equal([1], impl)
+      assert_equal(1, impl.size)
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+  def test_foo
+    FULL_IMPLS.each do |klass|
+      impl = klass.new([])
+    end
+  end
+
+
 
 end
