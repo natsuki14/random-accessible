@@ -214,23 +214,6 @@ module RandomWritable
   end
 
   def shift(*args)
-    n = nil
-    if args.empty?
-      n = 1
-      return nil if empty?
-    else
-      n = args[0].to_int
-      return [] if empty?
-    end
-    res = self[0...n]
-    (size - n).times do |i|
-      replace_at(i, at(i + n))
-    end
-    trim n
-    return res
-  end
-
-  def shift(*args)
     if args.size > 1
       raise ArgumentError, "wrong number of arguments(#{args.size})"
     end
