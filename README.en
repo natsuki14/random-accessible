@@ -7,6 +7,15 @@ As Enumerable mixin requests "each" method, RandomAccessible requests methods be
 - replace_access (similar to Array#[]=)
 - trim (similar to Array#pop)
 
+size method returns the number of objects which the object contains.
+Note that this method must behave same as Array's.
+
+read_access(pos) is similar to Array#[]. But the module guarantees that the argument is an Integer larger than or equal 0 and less than its size.
+
+replace_access(pos, val) is similar to Array#[]=. The module guarantees that the argument pos is an Integer and 0 <= pos < size.
+
+trim is similar to Array#pop. But the method can return anything.
+
 == Installation
 
 gem install random-accessible
@@ -14,7 +23,7 @@ gem install random-accessible
 == Limitation
 
 Behavior of RandomAccessible#eql? is different from Array's.
-The method always returns false if the argument does not include RandomReadable (RandomAccessible includes RandomReadable). Also note that Array#eql? returns false if its arguent is RandomAccessible.
+The method always returns false if the argument does not include RandomReadable (RandomAccessible includes RandomReadable). Also note that Array#eql? returns false if the arguent is RandomAccessible.
 
 == License
 
