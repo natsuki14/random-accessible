@@ -1,68 +1,69 @@
 require 'test/unit'
 require 'random-readable'
 
-class ErrorForTest < Exception
-end
-
-class ReadAccess
-
-  include RandomReadable
-
-  def initialize(ary)
-    @a = ary
-  end
-
-  def read_access(pos)
-    raise ErrorForTest if pos < 0 || @a.size <= pos
-    @a[pos.to_int]
-  end
-
-end
-
-class ReadAccessAndSize
-
-  include RandomReadable
-
-  def initialize(ary)
-    @a = ary
-  end
-
-  def read_access(pos)
-    raise ErrorForTest if pos < 0 || @a.size <= pos
-    @a[pos.to_int]
-  end
-
-  def size
-    @a.size
-  end
-
-end
-
-class ReadAccessAndLength
-
-  include RandomReadable
-
-  def initialize(ary)
-    @a = ary
-  end
-
-  def read_access(pos)
-    raise ErrorForTest if pos < 0 || @a.size <= pos
-    @a[pos.to_int]
-  end
-
-  def length
-    @a.length
-  end
-
-end
-
-NOSIZE_IMPLS = [ReadAccess]
-FULL_IMPLS = [Array, # To test test cases.
-              ReadAccessAndSize,
-              ReadAccessAndLength]
 
 class TestReadAccessable < Test::Unit::TestCase
+
+  class ErrorForTest < Exception
+  end
+  
+  class ReadAccess
+    
+    include RandomReadable
+    
+    def initialize(ary)
+      @a = ary
+    end
+    
+    def read_access(pos)
+      raise ErrorForTest if pos < 0 || @a.size <= pos
+      @a[pos.to_int]
+    end
+    
+  end
+  
+  class ReadAccessAndSize
+    
+    include RandomReadable
+    
+    def initialize(ary)
+    @a = ary
+    end
+    
+    def read_access(pos)
+      raise ErrorForTest if pos < 0 || @a.size <= pos
+      @a[pos.to_int]
+    end
+    
+    def size
+      @a.size
+    end
+    
+  end
+  
+  class ReadAccessAndLength
+    
+    include RandomReadable
+    
+    def initialize(ary)
+      @a = ary
+    end
+
+    def read_access(pos)
+      raise ErrorForTest if pos < 0 || @a.size <= pos
+      @a[pos.to_int]
+    end
+    
+    def length
+      @a.length
+    end
+
+  end
+  
+  NOSIZE_IMPLS = [ReadAccess]
+  FULL_IMPLS = [Array, # To test test cases.
+                ReadAccessAndSize,
+                ReadAccessAndLength]
 
   def test_size_not_implemented
     NOSIZE_IMPLS.each do |klass|
@@ -71,7 +72,7 @@ class TestReadAccessable < Test::Unit::TestCase
         impl.size
       end
       assert_raise NotImplementedError do
-      impl.length
+        impl.length
       end
     end
   end

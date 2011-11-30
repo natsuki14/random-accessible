@@ -43,6 +43,46 @@ FULL_IMPLS = [Array, FullImpl]
 
 class TestRandomAccesible < Test::Unit::TestCase
 
+  class FullImpl
+
+    include RandomAccessible
+    
+    def initialize(ary)
+      @a = ary
+      @size = ary.size
+    end
+    
+    def read_access(pos)
+      if pos < 0 || @size <= pos
+        raise ErrorForTest, "size=#{@size} pos=#{pos}"
+      end
+      @a.at(pos)
+    end
+    
+    def replace_access(pos, obj)
+      if pos < 0 || @size <= pos
+        raise ErrorForTest, "size=#{@size} pos=#{pos}"
+      end
+      @a[pos] = obj
+    end
+
+    def expand(n)
+      @size += n
+    end
+
+    def trim(n)
+      @size -= n
+      @a.pop(n)
+    end
+
+    def size
+      @size
+    end
+
+  end
+
+  FULL_IMPLS = [Array, FullImpl]
+
   def test_collect!
     FULL_IMPLS.each do |klass|
       impl = klass.new([1, 2, 3])

@@ -1,116 +1,116 @@
 require 'test/unit'
 require 'random-writable'
 
-class ErrorForTest < Exception
-end
+class TestRandomWritable < Test::Unit::TestCase
 
-class Reference < Array
-end
-
-class WriExp
-
-  include RandomWritable
-
-  def initialize(ary = [])
-    @a = ary
-    @size = ary.size
+  class ErrorForTest < Exception
   end
-
-  def to_ary
-    @a.clone
+  
+  class Reference < Array
   end
-
-  def expand(n)
-    @size += n
-  end
-
-  def trim(n)
-    @a.pop(n)
-    @size -= n
-    @size = 0 if @size < 0
-  end
-
-  def replace_access(pos, val)
-    if pos < 0
-      raise ErrorForTest, "size=#{@size} pos=#{pos}"
+  
+  class WriExp
+    
+    include RandomWritable
+    
+    def initialize(ary = [])
+      @a = ary
+      @size = ary.size
     end
-    @a[pos.to_int] = val
-  end
-
-end
-
-class WriExpSiz < WriExp
-
-  def size
-    @size
-  end
-
-  def replace_access(pos, val)
-    if @size <= pos
-      raise ErrorForTest, "size=#{@size} pos=#{pos}"
+    
+    def to_ary
+      @a.clone
     end
-    super
-  end
-
-end
-
-class WriExpDelIns < WriExp
-
-  def delete_access(pos)
-    if pos < 0 || @a.size <= pos
-      raise ErrorForTest, "@a.size=#{@a.size} but pos=#{pos}"
+    
+    def expand(n)
+      @size += n
     end
-    @a.delete_at(pos)
-    @size -= 1
-    return "retval of delete_access"
+    
+    def trim(n)
+      @a.pop(n)
+      @size -= n
+      @size = 0 if @size < 0
+    end
+    
+    def replace_access(pos, val)
+      if pos < 0
+        raise ErrorForTest, "size=#{@size} pos=#{pos}"
+      end
+      @a[pos.to_int] = val
+    end
+    
   end
 
-  def insert_access(pos, val)
-    raise ErrorForTest if pos < 0
-    @a.insert(pos, val)
-    @size += 1
+  class WriExpSiz < WriExp
+    
+    def size
+      @size
+    end
+    
+    def replace_access(pos, val)
+      if @size <= pos
+        raise ErrorForTest, "size=#{@size} pos=#{pos}"
+      end
+      super
+    end
+    
   end
-
-end
-
-class WriExpDelInsSiz < WriExpSiz
-
-  def delete_access(pos)
-    raise ErrorForTest if pos < 0 || @size <= pos
-    @a.delete_at(pos)
-    @size -= 1
-    return "retval of delete_access"
-  end
-
-  def insert_access(pos, val)
-    raise ErrorForTest if pos < 0 || @size <= pos
-    @a.insert(pos, val)
-    @size += 1
-  end
-
-end
-
-class FixedArray < Array
-
-  def delete_at(pos)
-    s = size
-    super
-    if pos < -s || s <= pos
-      return nil
-    else
+  
+  class WriExpDelIns < WriExp
+    
+    def delete_access(pos)
+      if pos < 0 || @a.size <= pos
+        raise ErrorForTest, "@a.size=#{@a.size} but pos=#{pos}"
+      end
+      @a.delete_at(pos)
+      @size -= 1
       return "retval of delete_access"
     end
+    
+    def insert_access(pos, val)
+      raise ErrorForTest if pos < 0
+      @a.insert(pos, val)
+      @size += 1
+    end
+    
+  end
+  
+  class WriExpDelInsSiz < WriExpSiz
+    
+    def delete_access(pos)
+      raise ErrorForTest if pos < 0 || @size <= pos
+      @a.delete_at(pos)
+      @size -= 1
+      return "retval of delete_access"
+    end
+    
+    def insert_access(pos, val)
+      raise ErrorForTest if pos < 0 || @size <= pos
+      @a.insert(pos, val)
+      @size += 1
+    end
+    
+  end
+  
+  class FixedArray < Array
+    
+    def delete_at(pos)
+      s = size
+      super
+      if pos < -s || s <= pos
+        return nil
+      else
+        return "retval of delete_access"
+      end
+    end
+    
   end
 
-end
+  NOSIZE_IMPLS = [WriExpDelIns]
+  NODELETE_IMPLS = [WriExpSiz]
+  FULL_IMPLS   = [FixedArray,
+                  WriExpDelInsSiz]
 
-
-NOSIZE_IMPLS = [WriExpDelIns]
-NODELETE_IMPLS = [WriExpSiz]
-FULL_IMPLS   = [FixedArray,
-                WriExpDelInsSiz]
-
-class TestRandomWritable < Test::Unit::TestCase
 
   def test_lshift
     FULL_IMPLS.each do |klass|
