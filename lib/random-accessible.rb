@@ -11,8 +11,8 @@ module RandomAccessible
   def self.define_modifying_method(*methods)
     methods.each do |method|
       modifier = method.to_s + '!'
-      define_method modifier do |*args|
-        res = send(method, *args)
+      define_method modifier do |*args, &block|
+        res = send(method, *args, &block)
         if self == res
           return nil
         else
@@ -23,6 +23,17 @@ module RandomAccessible
     end
   end
   private_class_method :define_modifying_method
+
+  # TODO: Optimize these methods if it is possible.
+  define_modifying_method :compact, :flatten, :uniq
+
+  def insert_at(pos, val)
+    expand 1
+    (pos...(size - 1)).reverse_each do |i|
+      self[i + 1] = self[i]
+    end
+    self[pos] = val
+  end
 
   def collect!(&block)
     if block.nil?
@@ -38,8 +49,6 @@ module RandomAccessible
 
   alias :map! :collect!
 
-  # TODO: Optimize these methods if it is possible.
-  define_modifying_method :compact, :flatten
 
   def delete(val, &block)
     deleted = 0
@@ -144,18 +153,23 @@ module RandomAccessible
     end
   end
 
-  def pop(n = nil)
+  def pop(*args)
     # Needs size.
+    if args.size > 1
+      raise ArgumentError, "wrong number of arguments (#{args.size} for 0..1)"
+    end
+
     res = nil
-    if n.nil?
+    if args.size == 0
       unless empty?
         res = at(size - 1)
-        trim 1
+        super
       end
     else
+      n = args[0]
       n = size if n > size
       res = self[(size - n)...size]
-      trim n
+      super n
     end
     return res
   end
@@ -172,6 +186,23 @@ module RandomAccessible
 
   alias :select! :keep_if
 
+  def shift(*args)
+    if args.size > 1
+      raise ArgumentError, "wrong number of arguments (#{args.size} for 0..1)"
+    end
+
+    if args.empty?
+      res = self[0]
+      super
+      return res
+    else
+      n = args[0]
+      res = self[0...n]
+      super n
+      return res
+    end
+  end
+
   def shuffle!
     # TODO: Optimize me.
     replace(shuffle)
@@ -183,8 +214,20 @@ module RandomAccessible
     end
 
     if args.size == 2 || args[0].is_a?(Range)
+      start = len = nil
+      if args.size == 2
+        start = args[0]
+        len = args[1]
+      else
+        range = args[0]
+        start = range.first
+        len = range.last - start
+        len += 1 unless range.exclude_end?
+      end
       res = self[*args]
-      self[*args] = nil
+      len.times do
+        delete_at(start)
+      end
       return res
     else
       pos = args[0].to_int
@@ -208,18 +251,26 @@ module RandomAccessible
 
   def sort_by!(&block)
     # TODO: Optimize me.
-    replace(sort_by(&block))
-  end
-
-  def uniq!(&block)
-    replace(uniq(&block))
+    if block.nil?
+      data = []
+      Enumerator.new do |y|
+        each do |el|
+          data << y.yield(el)
+        end
+        i = -1
+        sort_by! do
+          i += 1
+          data[i]
+        end
+      end
+    else
+      replace(sort_by(&block))
+    end
   end
 
   def unshift(*obj)
     # TODO: Optimize me.
-    obj.each do |el|
-      insert_at(0, el)
-    end
+    insert(0, *obj)
   end
 
 end
