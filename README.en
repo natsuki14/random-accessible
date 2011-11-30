@@ -1,0 +1,22 @@
+= random-accessible
+
+RandomAccessible mixin provides all methods of Array to your classes (regard as high-functioning edition of Enumerable).
+As Enumerable mixin requests "each" method, RandomAccessible requests methods below.
+- size (same as Array#size)
+- read_access (similar to Array#[])
+- replace_access (similar to Array#[]=)
+- trim (similar to Array#pop)
+
+== Installation
+
+gem install random-accessible
+
+== Limitation
+
+Behavior of RandomAccessible#eql? is different from Array's.
+The method always returns false if the argument does not include RandomReadable (RandomAccessible includes RandomReadable). Also note that Array#eql? returns false if its arguent is RandomAccessible.
+
+== License
+
+This library is distributed under the dual license of the Ruby license (in the narrow sense) and the 2-clause BSD license. Please see http://www.ruby-lang.org and BSDL.
+Copyright (c) 2011, Natsuki Kawai.
