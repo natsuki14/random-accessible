@@ -1,6 +1,6 @@
 # Author:: Natsuki Kawai (natsuki.kawai@gmail.com)
 # Copyright:: Copyright 2011 Natsuki Kawai
-# License:: 2-clause BSD or Ruby's
+# License:: 2-clause BSDL or Ruby's
 
 
 require 'common-traits'
@@ -96,6 +96,8 @@ module RandomReadable
     return true
   end
 
+  # This method is a read-accessor (see README).
+  # If you overrides this method, provide same function as Array's.
   # Same as Array's.
   # If the argument is one Integer, this method evaluates one element.
   # If the argument is a Range or start/length, this method evaluates
@@ -168,10 +170,10 @@ module RandomReadable
     return nil
   end
 
+  # This method is a read-accessor (see README).
+  # If you overrides this method, provide same function as Array's.
   # Same as Array's.
   # This method evaluates one element.
-  # This method is a read-accessor method.
-  # If you overrides this method, overrider must provide same function as Array's.
   # even if the argument is minus or out-of-range.
   def at(pos)
     pos = pos.to_int
