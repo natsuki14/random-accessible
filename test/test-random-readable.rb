@@ -60,10 +60,36 @@ class TestReadAccessable < Test::Unit::TestCase
 
   end
   
+  class HashWrapper
+    
+    include RandomReadable
+    
+    def initialize(ary = nil)
+      @h = Hash.new
+      if ary.nil?
+        @size = 0
+      else
+        ary.each_with_index do |el, i|
+          @h[i] = el
+        end
+      @size = ary.size
+      end
+    end
+
+    def read_access(pos)
+      raise if pos < 0 && @size <= pos
+      return @h[pos]
+    end
+       
+    attr_reader :size
+    
+  end
+  
   NOSIZE_IMPLS = [ReadAccess]
   FULL_IMPLS = [Array, # To test test cases.
                 ReadAccessAndSize,
-                ReadAccessAndLength]
+                ReadAccessAndLength,
+                HashWrapper]
 
   def test_size_not_implemented
     NOSIZE_IMPLS.each do |klass|

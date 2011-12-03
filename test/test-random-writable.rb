@@ -492,6 +492,7 @@ class TestRandomWritable < Test::Unit::TestCase
       impl = klass.new([1])
       impl.push(2, 3)
       assert_equal([1, 2, 3], impl.to_ary)
+      assert_equal(3, impl.size)
     end
     NOSIZE_IMPLS.each do |klass|
       impl = klass.new([])

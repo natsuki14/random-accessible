@@ -1,45 +1,6 @@
 require 'test/unit'
 require 'random-accessible'
 
-class FullImpl
-
-  include RandomAccessible
-
-  def initialize(ary)
-    @a = ary
-    @size = ary.size
-  end
-
-  def read_access(pos)
-    if pos < 0 || @size <= pos
-      raise ErrorForTest, "size=#{@size} pos=#{pos}"
-    end
-    @a.at(pos)
-  end
-
-  def replace_access(pos, obj)
-    if pos < 0 || @size <= pos
-      raise ErrorForTest, "size=#{@size} pos=#{pos}"
-    end
-    @a[pos] = obj
-  end
-
-  def expand(n)
-    @size += n
-  end
-
-  def trim(n)
-    @size -= n
-    @a.pop(n)
-  end
-
-  def size
-    @size
-  end
-
-end
-
-FULL_IMPLS = [Array, FullImpl]
 
 class TestRandomAccesible < Test::Unit::TestCase
 
@@ -81,7 +42,51 @@ class TestRandomAccesible < Test::Unit::TestCase
 
   end
 
-  FULL_IMPLS = [Array, FullImpl]
+  class HashWrapper
+    
+    include RandomAccessible
+    
+    def initialize(ary = nil)
+      @h = Hash.new
+      if ary.nil?
+        @size = 0
+      else
+        ary.each_with_index do |el, i|
+          @h[i] = el
+        end
+      @size = ary.size
+      end
+    end
+    
+    def read_access(pos)
+      raise if pos < 0 && @size <= pos
+      return @h[pos]
+    end
+    
+    def replace_access(pos, val)
+      raise if pos < 0 && @size <= pos
+      @h[pos] = val
+    end
+    
+    def expand(n)
+      n.times do
+        @h[@size] = nil
+        @size += 1
+      end
+    end
+    
+    def trim(n)
+      n.times do
+        @h.delete(@size - 1)
+        @size -= 1
+      end
+    end
+    
+    attr_reader :size
+    
+  end
+  
+  FULL_IMPLS = [Array, FullImpl, HashWrapper]
 
   def test_collect!
     FULL_IMPLS.each do |klass|

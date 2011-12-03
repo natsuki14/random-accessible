@@ -5,15 +5,13 @@
 
 require 'common-traits'
 
-# RandomReadable mixin allows integer-indexed random access
-# and provides non-destructive instance methods. Their name is same as Array.
-# The class must provide either read_access, at, or [] method.
-# The class may provide size or length method.
-# The function of at and [] must be same as Array's.
+# RandomReadable mixin provides non-destructive methods of Array.
+# The class must provide one or more methods from read-accessor group ([], at, read_access).
+# The class may provide one size-provider (size, length).
 # read_access(pos) is similar to "at" method, but the module guarantees the argument is positive.
 # And if the class provides size or length methods, the argument is less than size or length.
-# If the class provides neither size nor length methods, some of the methods of the module
-# raises NotImplementedError. Please see the document of each methods.
+# If the class does not provide size-provider, some of the methods of the module
+# raises NotImplementedError. Please see the document of each method.
 module RandomReadable
 
   include RandomAccessible::CommonTraits
