@@ -26,7 +26,7 @@ class TestRandomWritable < Test::Unit::TestCase
       @size += n
     end
     
-    def trim(n)
+    def shrink(n)
       @a.pop(n)
       @size -= n
       @size = 0 if @size < 0
