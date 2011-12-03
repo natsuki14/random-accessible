@@ -44,7 +44,7 @@ class HashWrapper
     
   # Define shrink.
   # This method is called when decreasing the object's size.
-  def trim(n)
+  def shrink(n)
     n.times do
       @h.delete(@size - 1)
       @size -= 1

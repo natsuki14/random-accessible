@@ -5,7 +5,7 @@ As Enumerable mixin requests "each" method, RandomAccessible requests methods be
 - size (same as Array#size)
 - read_access (similar to Array#[])
 - replace_access (similar to Array#[]=)
-- trim (similar to Array#pop)
+- shrink (similar to Array#pop)
 
 size method returns the number of objects which the object contains.
 Note that this method must behave same as Array's.
@@ -14,7 +14,7 @@ read_access(pos) is similar to Array#[]. But the module guarantees that the argu
 
 replace_access(pos, val) is similar to Array#[]=. The module guarantees that the argument pos is an Integer and 0 <= pos < size.
 
-trim is similar to Array#pop. But the method can return anything.
+shrink is similar to Array#pop. But the method can return anything.
 
 == Installation
 

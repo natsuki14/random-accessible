@@ -31,7 +31,7 @@ class TestRandomAccesible < Test::Unit::TestCase
       @size += n
     end
 
-    def trim(n)
+    def shrink(n)
       @size -= n
       @a.pop(n)
     end
@@ -75,7 +75,7 @@ class TestRandomAccesible < Test::Unit::TestCase
       end
     end
     
-    def trim(n)
+    def shrink(n)
       n.times do
         @h.delete(@size - 1)
         @size -= 1

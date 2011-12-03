@@ -7,7 +7,7 @@ require 'common-traits'
 
 # RandomWritable mixin provides write-access methods of Array.
 # The class must provide one or more methods from replace-accessor
-# ([]=, replace_at, replace_access) and shrink-accessor (trim) respectively.
+# ([]=, replace_at, replace_access) and shrink-accessor (shrink) respectively.
 # The class may provide insert-accessor (insert_access, insert_at, insert)
 # and delete-accessor (delete_access, delete_at). 
 # replace_at(pos, val) has same function as []= but it does not need to accept
@@ -170,7 +170,7 @@ module RandomWritable
   # This method raises NotImplementedError
   # if the class provides no size-provider.
   def clear
-    trim(size)
+    shrink(size)
   end
 
   # Same as Array's.
@@ -255,7 +255,7 @@ module RandomWritable
     if args.size == 1
       n = args[0].to_int
     end
-    trim(n)
+    shrink(n)
     return nil
   end
 
@@ -273,8 +273,8 @@ module RandomWritable
   # if the class provides no size-provider.
   def replace(another)
     diff = another.size - size
-    trim -diff if diff < 0
-    expand diff if diff > 0
+    shrink(-diff) if diff < 0
+    expand(diff) if diff > 0
     another.each_with_index do |el, index|
       replace_at(index, el)
     end

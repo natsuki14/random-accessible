@@ -10,7 +10,7 @@ require 'random-writable'
 # Some methods are defined in RandomReadable or RandomWritable.
 # The class must provide one or more methods from read-accessor group ([], at, read_access).
 # The class must provide one or more methods from replace-accessor
-# ([]=, replace_at, replace_access) and shrink-accessor (trim) respectively.
+# ([]=, replace_at, replace_access) and shrink-accessor (shrink) respectively.
 # The class may provide insert-accessor (insert_access, insert_at, insert)
 # and delete-accessor (delete_access, delete_at).
 # The class may provide one size-provider (size, length).
@@ -84,7 +84,7 @@ module RandomAccessible
           replace_at(i - deleted, at(i))
         end
       end
-      trim deleted
+      shrink deleted
     else
       size.times do |i|
         if at(i) == val
@@ -119,7 +119,7 @@ module RandomAccessible
     ((pos + 1)...size).each do |i|
       replace_at(i - 1, at(i))
     end
-    trim 1
+    shrink 1
     return res
   end
 
@@ -161,7 +161,7 @@ module RandomAccessible
         end
       end
       if deleted > 0
-        trim deleted
+        shrink deleted
         return self
       else
         return nil
