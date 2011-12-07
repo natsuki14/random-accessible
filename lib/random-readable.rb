@@ -22,11 +22,9 @@ module RandomReadable
   # This method raises NotImplementedError
   # if the class provides neither size nor length method.
   def to_ary
-    Enumerator.new do |y|
-      size.times do |i|
-        y << at(i)
-      end
-    end.to_a
+    Array.new(size) do |i|
+      at(i)
+    end
   end
 
   alias :to_a :to_ary
@@ -113,17 +111,19 @@ module RandomReadable
       if has_size?
         return nil if start < -size || size < start
         return nil if len < 0
-        return Enumerator.new do |y|
-          len.times do |i|
-            y << at(start + i) if start + i < size
-          end
-        end.to_a
+        res = []
+        len.times do |i|
+          res << at(start + i) if start + i < size
+        end
+        return res
       else
-        return Enumerator.new do |y|
-          len.times do |i|
-            y << at(start + i)
+        if len < 0
+          return []
+        else
+          return Array.new(len) do |i|
+            at(start + i)
           end
-        end.to_a
+        end
       end
     elsif args[0].is_a? Range
       range = args[0]
@@ -139,11 +139,11 @@ module RandomReadable
         elsif first < 0 || size < first
           return nil
         end
-        return Enumerator.new do |y|
-          (first..last).each do |i|
-            y << at(i) if 0 <= i && i < size
-          end
-        end.to_a
+        res = []
+        (first..last).each do |i|
+          res << at(i) if 0 <= i && i < size
+        end
+        return res
       else
         range.map do |i|
           at(i)
@@ -202,11 +202,11 @@ module RandomReadable
   # This method raises NotImplementedError
   # if the class provides neither size nor length method.
   def compact
-    Enumerator.new do |y|
-      each do |el|
-        y << el unless el.nil?
-      end
-    end.to_a
+    res = []
+    each do |el|
+      res << el unless el.nil?
+    end
+    return res
   end
 
   # Same as Array's.
@@ -229,11 +229,7 @@ module RandomReadable
   # if the class provides neither size nor length method.
   def each(&block)
     if block.nil?
-      return Enumerator.new do |y|
-        size.times do |i|
-          y << self[i]
-        end
-      end
+      return Enumerator.new(self, :each)
     else
       size.times do |i|
         block.call(self[i])
@@ -378,14 +374,12 @@ module RandomReadable
   # if the class provides neither size nor length method.
   def last(n = nil)
     if n.nil?
-      at(size - 1)
+      return at(size - 1)
     else
       n = size if n > size
-      Enumerator.new do |y|
-        n.times do |i|
-          y << at(size - n + i)
-        end
-      end.to_a
+      return Array.new(n) do |i|
+        at(size - n + i)
+      end
     end
   end
 
@@ -458,11 +452,7 @@ module RandomReadable
   def reverse_each(&block)
     # Needs size.
     if block.nil?
-      Enumerator.new do |y|
-        (size - 1).downto 0 do |i|
-          y << at(i)
-        end
-      end
+      return Enumerator.new(self, :reverse_each)
     else
       (size - 1).downto 0 do |i|
         yield at(i)
@@ -560,23 +550,23 @@ module RandomReadable
   # The arguments must not be negative values
   # if the class does not provide size or length method.
   def values_at(*selectors)
-    Enumerator.new do |y|
-      selectors.each do |s|
-        if s.is_a? Range
-          subary = self[s]
-          unless subary.nil?
-            self[s].each do |el|
-              y << el
-            end
+    res = []
+    selectors.each do |s|
+      if s.is_a? Range
+        subary = self[s]
+        unless subary.nil?
+          self[s].each do |el|
+            res << el
           end
-          if has_size? && !s.exclude_end? && s.include?(size)
-            y << nil
-          end
-        else
-          y << self[s.to_int]
         end
+        if has_size? && !s.exclude_end? && s.include?(size)
+          res << nil
+        end
+      else
+        res << self[s.to_int]
       end
-    end.to_a
+    end
+    return res
   end
 
   # Same as Array's.

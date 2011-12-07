@@ -56,11 +56,7 @@ module RandomAccessible
   # See the docment of RandomReadable#collect.
   def collect!(&block)
     if block.nil?
-      Enumerator.new do |y|
-        size.times do |i|
-          self[i] = y.yield(at(i))
-        end
-      end
+      return Enumerator.new(self, :collect!)
     else
       replace(collect(&block))
     end
@@ -140,16 +136,7 @@ module RandomAccessible
   # if the class provides no size-provider.
   def reject!(&block)
     if block.nil?
-      return Enumerator.new do |y|
-        deleted = 0
-        size.times do |i|
-          val = self[i - deleted]
-          if y.yield(val)
-            delete_at(i - deleted)
-            deleted += 1
-          end
-        end
-      end
+      return Enumerator.new(self, :reject!)
     else
       deleted = 0
       size.times do |i|
@@ -174,15 +161,7 @@ module RandomAccessible
   # if the class provides no size-provider.
   def keep_if(&block)
     if block.nil?
-      e = reject!
-      return Enumerator.new do |y|
-        i = 0
-        e.each do
-          res = !y.yield(self[i])
-          i += 1 unless res
-          res
-        end
-      end
+      return Enumerator.new(self, :keep_if)
     else
       reject! do |el|
         !block.call(el)
@@ -313,17 +292,7 @@ module RandomAccessible
   def sort_by!(&block)
     # TODO: Optimize me.
     if block.nil?
-      data = []
-      Enumerator.new do |y|
-        each do |el|
-          data << y.yield(el)
-        end
-        i = -1
-        sort_by! do
-          i += 1
-          data[i]
-        end
-      end
+      return Enumerator.new(self, :sort_by!)
     else
       replace(sort_by(&block))
     end

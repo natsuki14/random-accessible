@@ -1,3 +1,4 @@
+require 'rational'
 require 'test/unit'
 require 'random-readable'
 
