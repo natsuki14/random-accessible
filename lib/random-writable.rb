@@ -241,6 +241,7 @@ module RandomWritable
         insert_at(nth, el)
       end
     end
+    return self
   end
 
   # Remove specified number of elements from the last of this object.

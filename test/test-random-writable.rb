@@ -428,12 +428,12 @@ class TestRandomWritable < Test::Unit::TestCase
     FULL_IMPLS.each do |klass|
       msg = "Error in #{klass.name}"
       impl = klass.new([1, 2, 3])
-      impl.insert(2, -1, -2)
+      assert_same(impl, impl.insert(2, -1, -2))
       assert_equal([1, 2, -1, -2, 3], impl.to_ary, msg)
       assert_equal(5, impl.size, msg)
 
       impl = klass.new([1, 2, 3])
-      impl.insert(-2, -1, -2, -3)
+      assert_same(impl, impl.insert(-2, -1, -2, -3))
       assert_equal([1, 2, -1, -2, -3, 3], impl.to_ary, msg)
       assert_equal(6, impl.size, msg)
     end
@@ -446,7 +446,7 @@ class TestRandomWritable < Test::Unit::TestCase
     NOSIZE_IMPLS.each do |klass|
       msg = "Error in #{klass.name}"
       impl = klass.new([1, 2, 3])
-      impl.insert(2, -1, -2)
+      assert_same(impl, impl.insert(2, -1, -2))
       assert_equal([1, 2, -1, -2, 3], impl.to_ary, msg)
 
       impl = klass.new([1, 2, 3])
