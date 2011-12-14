@@ -242,12 +242,19 @@ module RandomReadable
   # and evaluates minimum elements needed to get results.
   # If not, this method is same as Object's and evaluates no element.
   def eql?(other)
-    return false unless self.class.eql?(other.class)
+    return false unless other.is_a?(RandomReadable)
     return super(other) unless has_size?
+
+    begin
+      return false if other.size != size
+    rescue NotImplementedError
+      return false
+    end
 
     each_index do |i|
       return false unless at(i).eql?(other.at(i))
     end
+
     return true
   end
 
@@ -586,3 +593,19 @@ module RandomReadable
   end
 
 end
+
+
+# class Array
+#
+#   old_eql = instance_method(:eql?)
+#
+#   define_method(:eql?) do |other|
+#     if other.is_a? RandomReadable
+#       other.eql?(self)
+#     else
+#       old_eql.bind(self).call(other)
+#     end
+#   end
+#
+# end
+
