@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'random-accessible'
-  s.version = '0.1.3'
+  s.version = '0.1.4'
   s.summary = <<EOS
 RandomAccessible mixin provides all methods of Array.
 EOS
@@ -11,7 +11,7 @@ As a class includes Enumerable must provide "each" method, a class includes Rand
 EOS
   s.authors = ["Natsuki Kawai"]
   s.email = ['natsuki.kawai@gmail.com']
-  s.files = Dir['lib/*.rb'] + Dir['test/*.rb'] + ['BSDL']
+  s.files = Dir['lib/*.rb'] + Dir['test/*.rb'] + Dir['sample/*.rb'] + ['BSDL']
   s.extra_rdoc_files = ['README.en']
   s.licenses = ["Ruby's", '2-clause BSDL']
   s.test_files = Dir['test/test-suite.rb']
