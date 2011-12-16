@@ -171,6 +171,7 @@ module RandomWritable
   # if the class provides no size-provider.
   def clear
     shrink(size)
+    return self
   end
 
   # Same as Array's.
@@ -184,6 +185,7 @@ module RandomWritable
       replace_at(i, el)
       i += 1
     end
+    return self
   end
 
   # Same as Array's.
@@ -228,6 +230,8 @@ module RandomWritable
         end
       end
     end
+
+    return self
   end
 
   # Same as Array's.
@@ -267,6 +271,7 @@ module RandomWritable
     obj.each do |el|
       replace_at(size, el)
     end
+    return self
   end
 
   # Same as Array's.
@@ -285,6 +290,7 @@ module RandomWritable
   # Same as Array's.
   # This method raises NotImplementedError
   # if the class provides no delete-accessor.
+  # This method ALWAYS RETURNS NULL.
   def shift(*args)
     if args.size > 1
       raise ArgumentError, "wrong number of arguments(#{args.size})"
